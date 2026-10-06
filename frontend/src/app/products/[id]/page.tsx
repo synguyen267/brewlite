@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProduct } from '@/lib/api';
+import { useCartStore } from '@/lib/cart-store';
+import CartLink from '@/components/CartLink';
 import {
   SIZES,
   TOPPINGS,
@@ -25,19 +27,38 @@ export default function ProductDetailPage() {
     retry: false,
   });
 
+  const addItem = useCartStore((s) => s.addItem);
   const [size, setSize] = useState<Size>('S');
   const [toppings, setToppings] = useState<string[]>([]);
+  const [added, setAdded] = useState(false);
 
   const toggleTopping = (value: string) =>
     setToppings((prev) =>
       prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
     );
 
+  const handleAdd = () => {
+    if (!data) return;
+    addItem({
+      productId: data.id,
+      name: data.name,
+      imageUrl: data.imageUrl,
+      basePrice: data.price,
+      size,
+      toppings,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <Link href="/" className="text-sm text-stone-500 hover:underline">
-        ← Quay lại menu
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/" className="text-sm text-stone-500 hover:underline">
+          ← Quay lại menu
+        </Link>
+        <CartLink />
+      </div>
 
       {isLoading && <p className="mt-6 text-stone-500">Đang tải...</p>}
 
@@ -106,11 +127,10 @@ export default function ProductDetailPage() {
                 {formatPrice(calcUnitPrice(data.price, size, toppings))}
               </span>
               <button
-                disabled
-                title="Sẽ hoạt động ở Task 5 (giỏ hàng)"
-                className="cursor-not-allowed rounded-lg bg-stone-800 px-5 py-2 text-white opacity-50"
+                onClick={handleAdd}
+                className="rounded-lg bg-stone-800 px-5 py-2 text-white hover:bg-stone-700"
               >
-                Thêm vào giỏ
+                {added ? 'Đã thêm ✓' : 'Thêm vào giỏ'}
               </button>
             </div>
           </div>
