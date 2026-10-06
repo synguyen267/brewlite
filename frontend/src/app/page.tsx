@@ -1,9 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProducts } from '@/lib/api';
-
-const formatPrice = (price: number) => price.toLocaleString('vi-VN') + 'đ';
+import { formatPrice } from '@/lib/pricing';
 
 export default function MenuPage() {
   const { data, isLoading, isError, refetch } = useQuery({
@@ -38,18 +38,22 @@ export default function MenuPage() {
           {data.map((p) => (
             <li
               key={p.id}
-              className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm"
+              className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm transition hover:shadow-md"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={p.imageUrl}
-                alt={p.name}
-                className="h-36 w-full object-cover"
-              />
-              <div className="p-3">
-                <h2 className="font-medium">{p.name}</h2>
-                <p className="text-sm text-amber-700">{formatPrice(p.price)}</p>
-              </div>
+              <Link href={`/products/${p.id}`} className="block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.imageUrl}
+                  alt={p.name}
+                  className="h-36 w-full object-cover"
+                />
+                <div className="p-3">
+                  <h2 className="font-medium">{p.name}</h2>
+                  <p className="text-sm text-amber-700">
+                    {formatPrice(p.price)}
+                  </p>
+                </div>
+              </Link>
             </li>
           ))}
         </ul>
