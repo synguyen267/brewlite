@@ -30,6 +30,7 @@ model Product {
 model Order {
   id        Int         @id @default(autoincrement())
   userId    Int?
+  user      User?       @relation(fields: [userId], references: [id])
   status    OrderStatus @default(PENDING)
   total     Int
   discount  Int         @default(0)
@@ -49,4 +50,13 @@ model OrderItem {
   qty       Int
   unitPrice Int
   lineTotal Int
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String
+  loyaltyPoints Int      @default(0)
+  createdAt     DateTime @default(now())
+  orders        Order[]
 }
