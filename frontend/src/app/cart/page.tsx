@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ApiError, createOrder } from '@/lib/api';
+import { useAuthStore } from '@/lib/auth-store';
 import {
   cartCount,
   cartTotal,
@@ -11,12 +14,23 @@ import {
 import { TOPPINGS, formatPrice } from '@/lib/pricing';
 
 export default function CartPage() {
+  const router = useRouter();
   const items = useCartStore((s) => s.items);
   const setQty = useCartStore((s) => s.setQty);
   const removeItem = useCartStore((s) => s.removeItem);
   const clear = useCartStore((s) => s.clear);
+  const token = useAuthStore((s) => s.token);
+  const logout = useAuthStore((s) => s.logout);
 
   const [hydrated, setHydrated] = useState(false);
+  const [placing, setPlacing] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [orderDone, setOrderDone] = useState<{
+    id: number;
+    total: number;
+    status: string;
+  } | null>(null);
+
   useEffect(() => {
     const unsub = useCartStore.persist.onFinishHydration(() =>
       setHydrated(true),
@@ -31,6 +45,56 @@ export default function CartPage() {
       : values
           .map((v) => TOPPINGS.find((t) => t.value === v)?.label ?? v)
           .join(', ');
+
+  const handleOrder = async () => {
+    if (!token) {
+      router.push('/login?next=/cart');
+      return;
+    }
+    setOrderError('');
+    setPlacing(true);
+    try {
+      const order = await createOrder(
+        token,
+        items.map((i) => ({
+          productId: i.productId,
+          size: i.size,
+          toppings: i.toppings,
+          qty: i.qty,
+        })),
+      );
+      clear();
+      setOrderDone(order);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        logout();
+        router.push('/login?next=/cart');
+        return;
+      }
+      setOrderError((err as Error).message);
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  if (orderDone) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-8">
+        <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
+          <p className="text-3xl">✓</p>
+          <h1 className="mt-2 text-xl font-bold">Đặt hàng thành công</h1>
+          <p className="mt-2">Mã đơn: #{orderDone.id}</p>
+          <p>Tổng tiền: {formatPrice(orderDone.total)}</p>
+          <p className="text-sm text-stone-600">
+            Trạng thái: {orderDone.status} (chờ thanh toán)
+          </p>
+          <Link href="/" className="mt-4 inline-block text-amber-700 underline">
+            Về trang chủ
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
@@ -120,6 +184,13 @@ export default function CartPage() {
                 {formatPrice(cartTotal(items))}
               </span>
             </div>
+
+            {orderError && (
+              <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {orderError}
+              </p>
+            )}
+
             <div className="mt-4 flex gap-3">
               <button
                 onClick={clear}
@@ -128,11 +199,15 @@ export default function CartPage() {
                 Xóa tất cả
               </button>
               <button
-                disabled
-                title="Sẽ hoạt động ở Task 8 (thanh toán)"
-                className="flex-1 cursor-not-allowed rounded-lg bg-stone-800 px-5 py-2 text-white opacity-50"
+                onClick={handleOrder}
+                disabled={placing}
+                className="flex-1 rounded-lg bg-stone-800 px-5 py-2 text-white hover:bg-stone-700 disabled:opacity-50"
               >
-                Thanh toán
+                {placing
+                  ? 'Đang đặt hàng...'
+                  : token
+                    ? 'Đặt hàng'
+                    : 'Đăng nhập để đặt hàng'}
               </button>
             </div>
           </div>

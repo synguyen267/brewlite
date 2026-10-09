@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchProducts } from '@/lib/api';
 import { formatPrice } from '@/lib/pricing';
 import CartLink from '@/components/CartLink'; 
+import AuthLink from '@/components/AuthLink';
 
 export default function MenuPage() {
   const { data, isLoading, isError, refetch } = useQuery({
@@ -16,7 +17,10 @@ export default function MenuPage() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">BrewLite</h1>
-          <CartLink />
+             <div className="flex items-center gap-4">
+     <AuthLink />
+     <CartLink />
+   </div> 
       </header>
 
       {isLoading && <p className="text-stone-500">Đang tải menu...</p>}
