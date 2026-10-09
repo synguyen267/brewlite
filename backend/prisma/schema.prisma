@@ -37,6 +37,7 @@ model Order {
   promoCode String?
   createdAt DateTime    @default(now())
   items     OrderItem[]
+  payments  Payment[]
 }
 
 model OrderItem {
@@ -59,4 +60,25 @@ model User {
   loyaltyPoints Int      @default(0)
   createdAt     DateTime @default(now())
   orders        Order[]
+}
+
+enum PaymentMethod {
+  WALLET
+  CARD
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+}
+
+model Payment {
+  id             Int           @id @default(autoincrement())
+  orderId        Int
+  order          Order         @relation(fields: [orderId], references: [id])
+  idempotencyKey String?       @unique
+  amount         Int
+  method         PaymentMethod
+  status         PaymentStatus
+  createdAt      DateTime      @default(now())  
 }

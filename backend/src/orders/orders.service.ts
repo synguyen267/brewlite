@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+ import {
+     BadRequestException,
+     Injectable,
+     NotFoundException,
+   } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { calcUnitPrice } from './pricing';
@@ -37,4 +41,18 @@ export class OrdersService {
       include: { items: true },
     });
   }
+       async findOneForUser(id: number, userId: number) {
+       const order = await this.prisma.order.findUnique({
+         where: { id },
+         include: {
+           items: {
+             include: { product: { select: { name: true, imageUrl: true } } },
+           },
+         },
+       });
+       if (!order || order.userId !== userId) {
+         throw new NotFoundException('Không tìm thấy đơn hàng');
+       }
+       return order;
+     }
 }
