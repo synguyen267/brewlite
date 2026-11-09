@@ -17,7 +17,7 @@ export class CreateOrderItemDto {
   @Min(1)
   productId!: number;
 
-  @IsIn(['S', 'M', 'L'])
+  @IsIn(['S', 'M', 'L', 'XL'])
   size!: Size;
 
   @IsArray()

@@ -89,3 +89,43 @@ export async function createOrder(
   }
   return res.json();
 }
+export type PaymentResult = {
+  paymentId: number;
+  paymentStatus: 'SUCCESS' | 'FAILED';
+  orderId: number;
+  orderStatus: string;
+  amount: number;
+};
+
+export async function fetchOrder(
+  token: string,
+  id: number,
+): Promise<{ id: number; status: string; total: number }> {
+  const res = await fetch(`${API_URL}/orders/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res, 'Không tải được đơn'), res.status);
+  }
+  return res.json();
+}
+
+export async function payOrder(
+  token: string,
+  orderId: number,
+  method: 'WALLET' | 'CARD',
+  simulateFailure?: boolean,
+): Promise<PaymentResult> {
+  const res = await fetch(`${API_URL}/payments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ orderId, method, simulateFailure }),
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res, 'Thanh toán thất bại'), res.status);
+  }
+  return res.json();
+}
