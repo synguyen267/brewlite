@@ -23,6 +23,11 @@ export class OrdersController {
     return this.ordersService.create(dto, req.user.id);
   }
 
+  @Get('me')
+  findMine(@Req() req: AuthedRequest) {
+    return this.ordersService.findAllForUser(req.user.id);
+  }
+
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,

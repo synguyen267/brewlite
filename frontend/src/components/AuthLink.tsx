@@ -18,6 +18,10 @@ export default function AuthLink() {
   return (
     <span className="text-sm text-stone-600">
       {user.email} ·{' '}
+      <Link href="/orders" className="underline">
+        Đơn hàng
+      </Link>{' '}
+      ·{' '}
       <button onClick={logout} className="underline">
         Đăng xuất
       </button>

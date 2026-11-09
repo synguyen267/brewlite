@@ -129,3 +129,28 @@ export async function payOrder(
   }
   return res.json();
 }
+export type MyOrder = {
+  id: number;
+  status: string;
+  total: number;
+  items: {
+    id: number;
+    size: string;
+    qty: number;
+    lineTotal: number;
+    product: { name: string; imageUrl: string };
+  }[];
+};
+
+export async function fetchMyOrders(token: string): Promise<MyOrder[]> {
+  const res = await fetch(`${API_URL}/orders/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(
+      await readError(res, 'Không tải được lịch sử đơn'),
+      res.status,
+    );
+  }
+  return res.json();
+}

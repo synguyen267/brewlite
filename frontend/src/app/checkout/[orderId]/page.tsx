@@ -111,9 +111,14 @@ export default function CheckoutPage() {
           <p className="text-sm text-stone-600">
             Trạng thái: {result.orderStatus}
           </p>
-          <Link href="/" className="mt-4 inline-block text-amber-700 underline">
-            Về trang chủ
-          </Link>
+                    <div className="mt-4 flex justify-center gap-4">
+            <Link href="/orders" className="text-amber-700 underline">
+              Xem lịch sử đơn
+            </Link>
+            <Link href="/" className="text-amber-700 underline">
+              Về trang chủ
+            </Link>
+          </div>
         </div>
       </main>
     );
