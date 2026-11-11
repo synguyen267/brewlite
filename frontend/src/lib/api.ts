@@ -12,6 +12,27 @@ export type OrderLine = {
   qty: number;
 };
 
+export type PaymentResult = {
+  paymentId: number;
+  paymentStatus: 'SUCCESS' | 'FAILED';
+  orderId: number;
+  orderStatus: string;
+  amount: number;
+};
+
+export type MyOrder = {
+  id: number;
+  status: string;
+  total: number;
+  items: {
+    id: number;
+    size: string;
+    qty: number;
+    lineTotal: number;
+    product: { name: string; imageUrl: string };
+  }[];
+};
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -75,27 +96,21 @@ export async function loginUser(
 export async function createOrder(
   token: string,
   items: OrderLine[],
-): Promise<{ id: number; status: string; total: number }> {
+  promoCode?: string,
+): Promise<{ id: number; status: string; total: number; discount: number }> {
   const res = await fetch(`${API_URL}/orders`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({ items, promoCode: promoCode || undefined }),
   });
   if (!res.ok) {
     throw new ApiError(await readError(res, 'Không tạo được đơn'), res.status);
   }
   return res.json();
 }
-export type PaymentResult = {
-  paymentId: number;
-  paymentStatus: 'SUCCESS' | 'FAILED';
-  orderId: number;
-  orderStatus: string;
-  amount: number;
-};
 
 export async function fetchOrder(
   token: string,
@@ -110,38 +125,6 @@ export async function fetchOrder(
   return res.json();
 }
 
-export async function payOrder(
-  token: string,
-  orderId: number,
-  method: 'WALLET' | 'CARD',
-  simulateFailure?: boolean,
-): Promise<PaymentResult> {
-  const res = await fetch(`${API_URL}/payments`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ orderId, method, simulateFailure }),
-  });
-  if (!res.ok) {
-    throw new ApiError(await readError(res, 'Thanh toán thất bại'), res.status);
-  }
-  return res.json();
-}
-export type MyOrder = {
-  id: number;
-  status: string;
-  total: number;
-  items: {
-    id: number;
-    size: string;
-    qty: number;
-    lineTotal: number;
-    product: { name: string; imageUrl: string };
-  }[];
-};
-
 export async function fetchMyOrders(token: string): Promise<MyOrder[]> {
   const res = await fetch(`${API_URL}/orders/me`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -151,6 +134,31 @@ export async function fetchMyOrders(token: string): Promise<MyOrder[]> {
       await readError(res, 'Không tải được lịch sử đơn'),
       res.status,
     );
+  }
+  return res.json();
+}
+
+export async function payOrder(
+  token: string,
+  orderId: number,
+  method: 'WALLET' | 'CARD',
+  simulateFailure?: boolean,
+  idempotencyKey?: string,
+): Promise<PaymentResult> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+  // Cùng một key gửi lại sẽ không bị trừ tiền / tạo thanh toán lần 2
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+
+  const res = await fetch(`${API_URL}/payments`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ orderId, method, simulateFailure }),
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res, 'Thanh toán thất bại'), res.status);
   }
   return res.json();
 }

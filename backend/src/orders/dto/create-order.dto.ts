@@ -6,7 +6,10 @@ import {
   IsArray,
   IsIn,
   IsInt,
+  IsOptional,
+  IsString,
   Max,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -38,4 +41,9 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items!: CreateOrderItemDto[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  promoCode?: string;
 }

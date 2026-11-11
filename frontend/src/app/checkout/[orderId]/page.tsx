@@ -65,7 +65,13 @@ export default function CheckoutPage() {
     setPayError('');
     setPaying(true);
     try {
-      const r = await payOrder(token, orderId, method, simulateFailure);
+      const r = await payOrder(
+        token,
+        orderId,
+        method,
+        simulateFailure,
+        crypto.randomUUID(),
+      );
       setResult(r);
       if (r.orderStatus === 'PAID') clearCart();
     } catch (err) {
@@ -111,7 +117,7 @@ export default function CheckoutPage() {
           <p className="text-sm text-stone-600">
             Trạng thái: {result.orderStatus}
           </p>
-                    <div className="mt-4 flex justify-center gap-4">
+          <div className="mt-4 flex justify-center gap-4">
             <Link href="/orders" className="text-amber-700 underline">
               Xem lịch sử đơn
             </Link>
