@@ -4,39 +4,57 @@
 
 ## Công nghệ
 
-- Frontend: Next.js (TypeScript, TailwindCSS)
-- Backend: NestJS (TypeScript)
-- CSDL: PostgreSQL + Prisma (thêm ở các task sau)
+- Frontend: Next.js (TypeScript, TailwindCSS, Zustand)
+- Backend: NestJS (TypeScript, JWT, class-validator)
+- CSDL: PostgreSQL + Prisma
+- Thanh toán: mock payment gateway
+- DevOps: Docker Compose, Git
 
 ## Cấu trúc
 
 ```
 brewlite/
-├── frontend/   # Next.js, cổng 3000
-├── backend/    # NestJS, cổng 3001
+├── frontend/            # Next.js, cổng 3000
+├── backend/             # NestJS, cổng 3001
+├── docker-compose.yml   # db + backend + frontend
 └── .env.example
 ```
 
-## Yêu cầu
+## Cách chạy bằng Docker (khuyên dùng)
 
-- Node.js 20 trở lên
-- Git
-- Docker Desktop (dùng từ Task 2 trở đi)
-
-## Cách chạy (môi trường phát triển)
-
-1. Sao chép `.env.example` thành `.env` và chỉnh giá trị nếu cần.
-2. Chạy backend:
+Yêu cầu: Docker Desktop.
 
 ```
+docker compose up --build -d
+```
+
+Đợi 1 đến 2 phút rồi mở http://localhost:3000.
+
+Nếu menu trống (lần đầu chạy với CSDL mới), nạp dữ liệu mẫu một lần:
+
+```
+docker compose exec backend node prisma/seed.js
+```
+
+Dừng hệ thống: `docker compose down` (thêm `-v` nếu muốn xóa cả dữ liệu).
+
+## Cách chạy môi trường phát triển
+
+Yêu cầu: Node.js 20 trở lên, Git, Docker Desktop (cho CSDL).
+
+1. Sao chép `.env.example` thành `.env` (trong `backend/`) và chỉnh nếu cần.
+2. Chạy CSDL và backend:
+
+```
+docker compose up -d db
 cd backend
 npm install
+npx prisma migrate dev
+node --env-file=.env prisma/seed.js
 npm run start:dev
 ```
 
-Mở http://localhost:3001, thấy "Hello World!" là backend chạy đúng.
-
-3. Chạy frontend (cửa sổ terminal khác):
+3. Chạy frontend (terminal khác):
 
 ```
 cd frontend
@@ -44,15 +62,21 @@ npm install
 npm run dev
 ```
 
-Mở http://localhost:3000, thấy trang chào của Next.js là frontend chạy đúng.
+Frontend: http://localhost:3000, backend: http://localhost:3001.
 
-## Chạy CSDL (từ Task 2)
+## API chính
 
-```
-docker compose up -d
-cd backend
-npx prisma migrate dev --name init
-node --env-file=.env prisma/seed.js
-```
+| Endpoint | Chức năng |
+|---|---|
+| GET /products | Danh sách sản phẩm |
+| GET /products/:id | Chi tiết sản phẩm |
+| POST /auth/register | Đăng ký |
+| POST /auth/login | Đăng nhập, trả JWT |
+| POST /orders | Tạo đơn (PENDING) |
+| GET /orders/me | Lịch sử đơn của user |
+| GET /orders/:id | Chi tiết một đơn |
+| POST /payments | Thanh toán |
 
-CSDL chạy ở cổng 5433. Kiểm tra API: http://localhost:3001/products
+## Luồng chính
+
+Menu → chọn size/topping → giỏ hàng → đăng nhập → đặt hàng → thanh toán (Ví/Thẻ) → xác nhận → lịch sử đơn.
